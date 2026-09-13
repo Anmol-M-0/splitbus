@@ -1,0 +1,14 @@
+### Bandit configuration for splitbus ###
+
+# Tests to skip:
+# B101: Test for use of assert (common in tests)
+# B608: Test for possible SQL injection (we use parameterized queries ? in SQLite)
+skips: ['B101', 'B608']
+
+# Excluded directories
+exclude_dirs:
+  - 'tests'
+  - 'benchmarks'
+  - '.venv'
+  - 'build'
+  - 'dist'

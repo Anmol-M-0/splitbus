@@ -2,8 +2,12 @@
 
 > **Zero-dependency Python runtime separating low-latency interactive dialogue from crash-resilient durable job execution.**
 
+[![CI](https://github.com/VirindaAI/splitbus/actions/workflows/ci.yml/badge.svg)](https://github.com/VirindaAI/splitbus/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
+[![Security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
 [![Tests: 7/7 Passing](https://img.shields.io/badge/tests-7%2F7%20passing-brightgreen.svg)](tests/)
 [![Paper: arXiv 2026](https://img.shields.io/badge/paper-arXiv%20Preprint-orange.svg)](#citation)
 
@@ -97,8 +101,10 @@ bus = InteractionBus(epoch_fence=fence)
 # 2. Initialize Durable Job Broker (WAL-backed)
 broker = JobBroker(db_path="jobs.db", max_workers=4)
 
+
 def summarize_documents(args):
     return {"status": "success", "summary": f"Processed {args['doc_count']} documents"}
+
 
 broker.register_routine("summarize", summarize_documents)
 
@@ -109,10 +115,12 @@ bridge = SplitBusBridge(bus, broker, fence)
 bus.subscribe("job:completed", lambda e: print("Completed:", e.payload))
 
 # Dispatch durable job from interaction layer
-bus.publish(InteractionEvent(
-    topic="task:request_durable",
-    payload={"routine": "summarize", "arguments": {"doc_count": 42}}
-))
+bus.publish(
+    InteractionEvent(
+        topic="task:request_durable",
+        payload={"routine": "summarize", "arguments": {"doc_count": 42}},
+    )
+)
 ```
 
 ### Human-in-the-Loop Approval Checkpoint
@@ -159,6 +167,24 @@ python benchmarks/generate_paper_plots.py --data-dir data/ --output-dir figures/
 This generates:
 * `figures/latency_comparison.svg`: Vector plot of tail-latency isolation under background bursts.
 * `figures/table_latency_isolation.tex`: Ready-to-publish LaTeX table.
+
+### Developer & CI Tooling
+Run the complete quality, linting, type-checking, and security pipeline:
+
+```bash
+# 1. Lint and code style formatting (Ruff)
+ruff check .
+ruff format --check .
+
+# 2. Strict static type analysis (Mypy)
+mypy src/
+
+# 3. Security vulnerability analysis (Bandit)
+bandit -r src/ -c .bandit.yaml
+
+# 4. Automated unit and integration test suite (Pytest)
+pytest tests/ -v
+```
 
 ---
 

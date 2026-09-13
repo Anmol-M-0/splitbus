@@ -3,13 +3,12 @@
 import os
 import tempfile
 import time
-import pytest
 
+from splitbus.baseline_unified import UnifiedMessageBus
+from splitbus.bridge import SplitBusBridge
 from splitbus.core import EpochFence, InteractionEvent, JobDescriptor, JobState
 from splitbus.interaction_bus import InteractionBus
 from splitbus.job_broker import JobBroker
-from splitbus.bridge import SplitBusBridge
-from splitbus.baseline_unified import UnifiedMessageBus
 
 
 def test_interaction_bus_exact_and_pattern_dispatch():
@@ -122,10 +121,10 @@ def test_job_broker_crash_recovery():
         with broker._lock:
             # Manually simulate in-flight RUNNING state before sudden crash
             import sqlite3
+
             with sqlite3.connect(db_path) as conn:
                 conn.execute(
-                    "UPDATE durable_jobs SET state = 'RUNNING' WHERE job_id = ?",
-                    (job_id,)
+                    "UPDATE durable_jobs SET state = 'RUNNING' WHERE job_id = ?", (job_id,)
                 )
                 conn.commit()
 
@@ -154,11 +153,7 @@ def test_split_bus_bridge_and_epoch_fencing():
         bus.subscribe("job:fenced_out", lambda e: fenced_events.append(e))
 
         job = JobDescriptor(
-            job_id="job_001",
-            routine="test",
-            epoch=1,
-            state=JobState.COMPLETED,
-            result={"ok": True}
+            job_id="job_001", routine="test", epoch=1, state=JobState.COMPLETED, result={"ok": True}
         )
 
         # Valid epoch delivery

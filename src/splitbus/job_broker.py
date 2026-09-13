@@ -9,8 +9,9 @@ import sqlite3
 import threading
 import time
 import uuid
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional
+from typing import Any
 
 from splitbus.core import JobBrokerProtocol, JobDescriptor, JobState
 
@@ -33,10 +34,10 @@ class JobBroker(JobBrokerProtocol):
         self.db_path = str(db_path)
         self.max_workers = max_workers
         self._lock = threading.RLock()
-        self._routine_registry: Dict[str, Callable[[Dict[str, Any]], Any]] = {}
-        self._executor: Optional[concurrent.futures.ThreadPoolExecutor] = None
+        self._routine_registry: dict[str, Callable[[dict[str, Any]], Any]] = {}
+        self._executor: concurrent.futures.ThreadPoolExecutor | None = None
         self._running = False
-        self._worker_thread: Optional[threading.Thread] = None
+        self._worker_thread: threading.Thread | None = None
 
         self._init_db()
         if auto_start:
@@ -69,7 +70,7 @@ class JobBroker(JobBrokerProtocol):
             )
             conn.commit()
 
-    def register_routine(self, name: str, func: Callable[[Dict[str, Any]], Any]) -> None:
+    def register_routine(self, name: str, func: Callable[[dict[str, Any]], Any]) -> None:
         """Register an executable task routine handler."""
         with self._lock:
             self._routine_registry[name] = func
@@ -100,7 +101,7 @@ class JobBroker(JobBrokerProtocol):
     def submit(
         self,
         routine: str,
-        arguments: Dict[str, Any],
+        arguments: dict[str, Any],
         epoch: int = 0,
         max_retries: int = 3,
     ) -> str:
@@ -120,7 +121,7 @@ class JobBroker(JobBrokerProtocol):
         self._write_job(job)
         return job_id
 
-    def get_job(self, job_id: str) -> Optional[JobDescriptor]:
+    def get_job(self, job_id: str) -> JobDescriptor | None:
         """Fetch job state from persistent storage."""
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
@@ -238,7 +239,7 @@ class JobBroker(JobBrokerProtocol):
             except Exception:
                 time.sleep(0.05)
 
-    def _fetch_next_pending(self) -> Optional[JobDescriptor]:
+    def _fetch_next_pending(self) -> JobDescriptor | None:
         with self._lock:
             with sqlite3.connect(self.db_path) as conn:
                 conn.row_factory = sqlite3.Row

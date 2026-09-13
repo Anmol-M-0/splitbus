@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
+import contextlib
 import fnmatch
 import queue
 import threading
 import time
 from collections import defaultdict
-from typing import Any, Callable, Dict, List, Optional
 
 from splitbus.core import InteractionEvent, InteractionHandler
 
@@ -25,11 +25,11 @@ class UnifiedMessageBus:
 
     def __init__(self, maxsize: int = 10000, worker_count: int = 2) -> None:
         self._queue: queue.Queue[InteractionEvent] = queue.Queue(maxsize=maxsize)
-        self._subscribers: Dict[str, List[InteractionHandler]] = defaultdict(list)
+        self._subscribers: dict[str, list[InteractionHandler]] = defaultdict(list)
         self._lock = threading.RLock()
         self._running = False
-        self._worker_threads: List[threading.Thread] = []
-        self._latency_samples: List[float] = []
+        self._worker_threads: list[threading.Thread] = []
+        self._latency_samples: list[float] = []
         self.worker_count = worker_count
 
     def start(self) -> None:
@@ -61,10 +61,8 @@ class UnifiedMessageBus:
 
     def publish(self, event: InteractionEvent) -> None:
         """Enqueue event onto the unified multiplexed channel."""
-        try:
+        with contextlib.suppress(queue.Full):
             self._queue.put_nowait(event)
-        except queue.Full:
-            pass  # Drop under catastrophic overflow
 
     def publish_sync(self, event: InteractionEvent) -> float:
         """Synchronously enqueue and measure round-trip queueing latency in milliseconds."""
@@ -106,21 +104,19 @@ class UnifiedMessageBus:
                     self._latency_samples.pop(0)
 
             # Dispatch to subscribers
-            handlers_to_call: List[InteractionHandler] = []
+            handlers_to_call: list[InteractionHandler] = []
             with self._lock:
                 for pattern, handlers in self._subscribers.items():
                     if fnmatch.fnmatchcase(event.topic, pattern):
                         handlers_to_call.extend(handlers)
 
             for handler in handlers_to_call:
-                try:
+                with contextlib.suppress(Exception):
                     handler(event)
-                except Exception:
-                    pass
 
             self._queue.task_done()
 
-    def record_latency(self) -> List[float]:
+    def record_latency(self) -> list[float]:
         with self._lock:
             return list(self._latency_samples)
 

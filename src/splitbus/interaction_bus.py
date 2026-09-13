@@ -6,7 +6,6 @@ import fnmatch
 import threading
 import time
 from collections import defaultdict
-from typing import Dict, List, Set
 
 from splitbus.core import EpochFence, InteractionBusProtocol, InteractionEvent, InteractionHandler
 
@@ -24,11 +23,11 @@ class InteractionBus(InteractionBusProtocol):
     def __init__(self, epoch_fence: EpochFence | None = None) -> None:
         self.epoch_fence = epoch_fence or EpochFence()
         self._lock = threading.RLock()
-        self._subscribers: Dict[str, List[InteractionHandler]] = defaultdict(list)
-        self._exact_subscribers: Dict[str, List[InteractionHandler]] = defaultdict(list)
-        self._pattern_subscribers: Dict[str, List[InteractionHandler]] = defaultdict(list)
-        self._metrics: Dict[str, int] = defaultdict(int)
-        self._latency_samples: List[float] = []
+        self._subscribers: dict[str, list[InteractionHandler]] = defaultdict(list)
+        self._exact_subscribers: dict[str, list[InteractionHandler]] = defaultdict(list)
+        self._pattern_subscribers: dict[str, list[InteractionHandler]] = defaultdict(list)
+        self._metrics: dict[str, int] = defaultdict(int)
+        self._latency_samples: list[float] = []
 
     def subscribe(self, topic_pattern: str, handler: InteractionHandler) -> None:
         """Register a handler for exact topic or glob pattern (e.g. 'audio:*')."""
@@ -44,9 +43,15 @@ class InteractionBus(InteractionBusProtocol):
         with self._lock:
             if topic_pattern in self._subscribers and handler in self._subscribers[topic_pattern]:
                 self._subscribers[topic_pattern].remove(handler)
-            if topic_pattern in self._exact_subscribers and handler in self._exact_subscribers[topic_pattern]:
+            if (
+                topic_pattern in self._exact_subscribers
+                and handler in self._exact_subscribers[topic_pattern]
+            ):
                 self._exact_subscribers[topic_pattern].remove(handler)
-            if topic_pattern in self._pattern_subscribers and handler in self._pattern_subscribers[topic_pattern]:
+            if (
+                topic_pattern in self._pattern_subscribers
+                and handler in self._pattern_subscribers[topic_pattern]
+            ):
                 self._pattern_subscribers[topic_pattern].remove(handler)
 
     def publish(self, event: InteractionEvent) -> None:
@@ -56,7 +61,7 @@ class InteractionBus(InteractionBusProtocol):
         measuring dispatch transit latency.
         """
         start_time = time.monotonic()
-        targets: List[InteractionHandler] = []
+        targets: list[InteractionHandler] = []
 
         with self._lock:
             self._metrics["events_published"] += 1
@@ -82,7 +87,7 @@ class InteractionBus(InteractionBusProtocol):
             if len(self._latency_samples) > 10000:
                 self._latency_samples.pop(0)
 
-    def record_latency(self) -> List[float]:
+    def record_latency(self) -> list[float]:
         """Return a copy of recent dispatch latency samples in milliseconds."""
         with self._lock:
             return list(self._latency_samples)

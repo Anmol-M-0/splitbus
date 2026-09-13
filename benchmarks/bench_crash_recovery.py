@@ -6,25 +6,24 @@ import argparse
 import json
 import os
 import statistics
-import tempfile
 import sys
+import tempfile
 import time
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 # Ensure src/ is on sys.path for zero-setup execution
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from splitbus.core import JobState
 from splitbus.job_broker import JobBroker
 
 
-def simulate_crash_and_recover(total_jobs: int = 50) -> Dict[str, Any]:
+def simulate_crash_and_recover(total_jobs: int = 50) -> dict[str, Any]:
     with tempfile.TemporaryDirectory() as tmpdir:
         db_path = os.path.join(tmpdir, "crash_bench.db")
         broker = JobBroker(db_path=db_path, max_workers=4)
 
-        def slow_task(args: Dict[str, Any]) -> Dict[str, Any]:
+        def slow_task(args: dict[str, Any]) -> dict[str, Any]:
             time.sleep(0.05)
             return {"done": args.get("id")}
 
@@ -73,7 +72,9 @@ def simulate_crash_and_recover(total_jobs: int = 50) -> Dict[str, Any]:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run split-bus crash recovery benchmark.")
     parser.add_argument("--runs", type=int, default=5, help="Number of repetitions")
-    parser.add_argument("--output-dir", type=str, default="data", help="Directory to save JSON results")
+    parser.add_argument(
+        "--output-dir", type=str, default="data", help="Directory to save JSON results"
+    )
     args = parser.parse_args()
 
     out_dir = Path(args.output_dir)
@@ -87,7 +88,9 @@ def main() -> None:
         res = simulate_crash_and_recover(total_jobs=50)
         rto_list.append(res["rto_ms"])
         loss_rates.append(res["job_loss_rate"])
-        print(f"  Run {r+1}: RTO = {res['rto_ms']:.2f} ms, Recovered = {res['recovered_count']}, Lost Jobs = {res['lost_jobs']} (0.0%)")
+        print(
+            f"  Run {r + 1}: RTO = {res['rto_ms']:.2f} ms, Recovered = {res['recovered_count']}, Lost Jobs = {res['lost_jobs']} (0.0%)"
+        )
 
     summary = {
         "rto_ms_mean": statistics.mean(rto_list),
@@ -97,7 +100,9 @@ def main() -> None:
         "timestamp": time.time(),
     }
 
-    print(f"\nFinal Summary: Mean RTO = {summary['rto_ms_mean']:.2f} ms (±{summary['rto_ms_std']:.2f} ms), Job Loss = 0.00%")
+    print(
+        f"\nFinal Summary: Mean RTO = {summary['rto_ms_mean']:.2f} ms (±{summary['rto_ms_std']:.2f} ms), Job Loss = 0.00%"
+    )
 
     json_path = out_dir / "crash_recovery_results.json"
     with open(json_path, "w", encoding="utf-8") as f:

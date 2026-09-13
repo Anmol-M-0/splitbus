@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
-
-from splitbus.core import EpochFence, InteractionBusProtocol, InteractionEvent, JobBrokerProtocol, JobDescriptor
+from splitbus.core import (
+    EpochFence,
+    InteractionBusProtocol,
+    InteractionEvent,
+    JobBrokerProtocol,
+    JobDescriptor,
+)
 
 
 class SplitBusBridge:

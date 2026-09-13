@@ -5,12 +5,14 @@ from __future__ import annotations
 import enum
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, Optional, Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 
 class JobState(str, enum.Enum):
     """Lifecycle states of a durable job in the execution broker."""
+
     PENDING = "PENDING"
     RUNNING = "RUNNING"
     PAUSED_APPROVAL = "PAUSED_APPROVAL"
@@ -30,8 +32,9 @@ class InteractionEvent:
         timestamp: Monotonic timestamp in seconds when the event was dispatched.
         event_id: Unique event identifier.
     """
+
     topic: str
-    payload: Dict[str, Any] = field(default_factory=dict)
+    payload: dict[str, Any] = field(default_factory=dict)
     epoch: int = 0
     timestamp: float = field(default_factory=time.monotonic)
     event_id: str = field(default_factory=lambda: str(uuid.uuid4()))
@@ -56,21 +59,22 @@ class JobDescriptor:
         result: Execution output upon completion.
         error: Error message upon failure.
     """
+
     job_id: str
     routine: str
-    arguments: Dict[str, Any] = field(default_factory=dict)
+    arguments: dict[str, Any] = field(default_factory=dict)
     state: JobState = JobState.PENDING
     epoch: int = 0
-    approval_token: Optional[str] = None
-    checkpoint: Dict[str, Any] = field(default_factory=dict)
+    approval_token: str | None = None
+    checkpoint: dict[str, Any] = field(default_factory=dict)
     retry_count: int = 0
     max_retries: int = 3
     created_at: float = field(default_factory=time.time)
     updated_at: float = field(default_factory=time.time)
-    result: Optional[Any] = None
-    error: Optional[str] = None
+    result: Any | None = None
+    error: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "job_id": self.job_id,
             "routine": self.routine,
@@ -88,7 +92,7 @@ class JobDescriptor:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> JobDescriptor:
+    def from_dict(cls, data: dict[str, Any]) -> JobDescriptor:
         return cls(
             job_id=data["job_id"],
             routine=data["routine"],
@@ -149,8 +153,8 @@ class InteractionBusProtocol(Protocol):
 class JobBrokerProtocol(Protocol):
     """Formal protocol for the log-structured Durable Job Broker (B_dur)."""
 
-    def submit(self, routine: str, arguments: Dict[str, Any], epoch: int = 0) -> str: ...
-    def get_job(self, job_id: str) -> Optional[JobDescriptor]: ...
+    def submit(self, routine: str, arguments: dict[str, Any], epoch: int = 0) -> str: ...
+    def get_job(self, job_id: str) -> JobDescriptor | None: ...
     def pause_for_approval(self, job_id: str) -> str: ...
     def approve_and_resume(self, job_id: str, token: str) -> bool: ...
     def cancel(self, job_id: str) -> bool: ...

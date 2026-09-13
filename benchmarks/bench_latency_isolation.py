@@ -7,11 +7,11 @@ import json
 import math
 import os
 import statistics
-import tempfile
 import sys
+import tempfile
 import time
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 # Ensure src/ is on sys.path for zero-setup execution
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
@@ -22,7 +22,7 @@ from splitbus.interaction_bus import InteractionBus
 from splitbus.job_broker import JobBroker
 
 
-def compute_percentiles(samples: List[float]) -> Dict[str, float]:
+def compute_percentiles(samples: list[float]) -> dict[str, float]:
     if not samples:
         return {"p50": 0.0, "p90": 0.0, "p95": 0.0, "p99": 0.0, "mean": 0.0, "stddev": 0.0}
     sorted_s = sorted(samples)
@@ -37,7 +37,7 @@ def compute_percentiles(samples: List[float]) -> Dict[str, float]:
     }
 
 
-def heavy_task(args: Dict[str, Any]) -> Dict[str, Any]:
+def heavy_task(args: dict[str, Any]) -> dict[str, Any]:
     """Synthetic heavy tool task simulating vector embedding or file I/O."""
     val = args.get("val", 1000)
     total = 0
@@ -50,7 +50,7 @@ def heavy_task(args: Dict[str, Any]) -> Dict[str, Any]:
 def run_split_bus_trial(
     interactive_events: int = 300,
     background_tasks: int = 50,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     with tempfile.TemporaryDirectory() as tmpdir:
         db_path = os.path.join(tmpdir, "bench.db")
         fence = EpochFence()
@@ -83,7 +83,7 @@ def run_split_bus_trial(
 def run_unified_bus_trial(
     interactive_events: int = 300,
     background_tasks: int = 50,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     unified = UnifiedMessageBus(worker_count=4)
     unified.start()
 
@@ -130,14 +130,16 @@ def run_unified_bus_trial(
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run split-bus latency isolation benchmark.")
     parser.add_argument("--runs", type=int, default=5, help="Number of repetitions per condition")
-    parser.add_argument("--output-dir", type=str, default="data", help="Directory to save JSON results")
+    parser.add_argument(
+        "--output-dir", type=str, default="data", help="Directory to save JSON results"
+    )
     args = parser.parse_args()
 
     out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
     task_levels = [10, 25, 50, 100]
-    results: Dict[str, Any] = {
+    results: dict[str, Any] = {
         "split_bus": {},
         "unified_bus": {},
         "metadata": {
@@ -153,7 +155,7 @@ def main() -> None:
 
         # Split Bus runs
         split_p50, split_p99 = [], []
-        for r in range(args.runs):
+        for _r in range(args.runs):
             stats = run_split_bus_trial(interactive_events=200, background_tasks=tasks)
             split_p50.append(stats["p50"])
             split_p99.append(stats["p99"])
@@ -165,11 +167,13 @@ def main() -> None:
             "p99_std": statistics.stdev(split_p99) if args.runs > 1 else 0.0,
         }
         results["split_bus"][str(tasks)] = split_summary
-        print(f"  [Split-Bus]    p50: {split_summary['p50_mean']:.3f} ms (±{split_summary['p50_std']:.3f}), p99: {split_summary['p99_mean']:.3f} ms (±{split_summary['p99_std']:.3f})")
+        print(
+            f"  [Split-Bus]    p50: {split_summary['p50_mean']:.3f} ms (±{split_summary['p50_std']:.3f}), p99: {split_summary['p99_mean']:.3f} ms (±{split_summary['p99_std']:.3f})"
+        )
 
         # Unified Bus runs
         uni_p50, uni_p99 = [], []
-        for r in range(args.runs):
+        for _r in range(args.runs):
             stats = run_unified_bus_trial(interactive_events=200, background_tasks=tasks)
             uni_p50.append(stats["p50"])
             uni_p99.append(stats["p99"])
@@ -181,7 +185,9 @@ def main() -> None:
             "p99_std": statistics.stdev(uni_p99) if args.runs > 1 else 0.0,
         }
         results["unified_bus"][str(tasks)] = uni_summary
-        print(f"  [Unified Bus]  p50: {uni_summary['p50_mean']:.3f} ms (±{uni_summary['p50_std']:.3f}), p99: {uni_summary['p99_mean']:.3f} ms (±{uni_summary['p99_std']:.3f})")
+        print(
+            f"  [Unified Bus]  p50: {uni_summary['p50_mean']:.3f} ms (±{uni_summary['p50_std']:.3f}), p99: {uni_summary['p99_mean']:.3f} ms (±{uni_summary['p99_std']:.3f})"
+        )
 
     # Save to JSON
     json_path = out_dir / "latency_isolation_results.json"

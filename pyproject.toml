@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Split-Bus Architecture for Reliable Desktop Agents: Separating Realtime Interaction from Durable Asynchronous Execution"
 readme = "README.md"
 authors = [
-    { name = "VirindaAI Research Team", email = "research@virinda.ai" },
+    { name = "VirindaAI Research Team", email = "research@abhi.day" },
     { name = "Anmol M.", email = "anmol@abhi.day" }
 ]
 license = "MIT"

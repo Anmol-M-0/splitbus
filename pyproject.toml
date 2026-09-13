@@ -1,0 +1,32 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "splitbus"
+version = "0.1.0"
+description = "Split-Bus Architecture for Reliable Desktop Agents: Separating Realtime Interaction from Durable Asynchronous Execution"
+readme = "README.md"
+authors = [
+    { name = "VirindaAI Research Team", email = "research@virinda.ai" },
+    { name = "Anmol M.", email = "anmol@virinda.ai" }
+]
+license = "MIT"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0"
+]
+benchmarks = [
+    "matplotlib>=3.8.0"
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/splitbus"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

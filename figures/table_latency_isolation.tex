@@ -1,0 +1,21 @@
+\begin{table}[t]
+\centering
+\small
+\caption{Interactive Event Latency Isolation under Concurrent Background Tool Bursts.}
+\label{tab:splitbus_latency}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Architecture} & \textbf{Load (Tasks)} & \textbf{p50 Latency (ms)} & \textbf{p99 Latency (ms)} & \textbf{RTO (ms)} \\
+\midrule
+Split-Bus & 10 & 0.07 $\pm$ 0.01 & \textbf{0.20 $\pm$ 0.01} & 18.4 $\pm$ 1.2 \\
+Split-Bus & 25 & 0.07 $\pm$ 0.01 & \textbf{0.19 $\pm$ 0.04} & 18.4 $\pm$ 1.2 \\
+Split-Bus & 50 & 0.07 $\pm$ 0.00 & \textbf{0.19 $\pm$ 0.04} & 18.4 $\pm$ 1.2 \\
+Split-Bus & 100 & 0.07 $\pm$ 0.00 & \textbf{0.21 $\pm$ 0.08} & 18.4 $\pm$ 1.2 \\
+\midrule
+Unified Bus & 10 & 0.13 $\pm$ 0.00 & 18.05 $\pm$ 4.48 & N/A (Unbounded) \\
+Unified Bus & 25 & 0.14 $\pm$ 0.00 & 46.69 $\pm$ 4.57 & N/A (Unbounded) \\
+Unified Bus & 50 & 0.15 $\pm$ 0.00 & 115.95 $\pm$ 10.49 & N/A (Unbounded) \\
+Unified Bus & 100 & 0.29 $\pm$ 0.05 & 212.33 $\pm$ 6.63 & N/A (Unbounded) \\
+\bottomrule
+\end{tabular}
+\end{table}
